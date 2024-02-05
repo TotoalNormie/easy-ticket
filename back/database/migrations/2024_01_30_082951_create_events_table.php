@@ -17,6 +17,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string('name', 20);
             $table->string('description', 1000);
+            $table->string('image', 1000);
             $table->foreignIdFor(EventType::class)->constrained()->cascadeOnDelete();
             $table->datetime('datetime');
             $table->string('location', 100);

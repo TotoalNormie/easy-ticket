@@ -3,6 +3,10 @@
 use App\Http\Controllers\Api\AuthenticationController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\EventTypeController;
+use App\Http\Controllers\OrderedTicketController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PDFController;
+use App\Http\Middleware\AdminMiddleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,10 +32,17 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
 Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     Route::post('login', [AuthenticationController::class, 'store']);
-    Route::post('logout', [AuthenticationController::class, 'destroy'])->middleware('auth:api');
+    Route::delete('logout', [AuthenticationController::class, 'destroy'])->middleware('auth:api');
+    Route::post('register', [AuthenticationController::class, 'register']);
+    Route::get('check-auth', [AuthenticationController::class, 'checkAuth'])->middleware('auth:api');
 });
 
 Route::middleware(['auth:api'])->group(function () {
+    Route::post('buy-ticket', [OrderedTicketController::class, 'buy']);
+    Route::post('get-ticket', [OrderedTicketController::class, 'generatePDF']);
+});
+
+Route::middleware(['auth:api', AdminMiddleware::class])->group(function () {
     Route::post('create-event', [EventController::class, 'create']);
     Route::patch('edit-event/{id}', [EventController::class, 'update']);
     Route::delete('delete-event/{id}', [EventController::class, 'remove']);
@@ -40,3 +51,9 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('edit-event-type/{id}', [EventTypeController::class, 'update']);
     Route::delete('delete-event-type/{id}', [EventTypeController::class, 'remove']);
 });
+
+Route::get('pdf', [PDFController::class, 'generatePDF']);
+Route::post('/create-payment-intent', [PaymentController::class, 'createPaymentIntent']);
+Route::get('/events', [EventController::class, 'get']);
+Route::get('/event-types', [EventTypeController::class, 'get']);
+Route::get('/event/{id}', [EventController::class, 'getById']);

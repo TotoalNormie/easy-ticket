@@ -1,0 +1,217 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	min-width: 0;
+	color: white;
+	font-family: system-ui, sans-serif;
+}
+
+body {
+	color-scheme: dark;
+	background-color: #202020;
+}
+
+#root {
+	padding: 1rem;
+	min-height: 100svh;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: 3rem 1.5rem;
+}
+
+.image {
+	aspect-ratio: 3 / 4;
+	/* display: grid; */
+	width: min(100%, 20rem);
+	border-radius: 1rem;
+
+	& img {
+		border-radius: 1rem;
+		width: 100%;
+		height: 100%;
+		background-position: center;
+		object-fit: cover;
+		background-size: cover;
+	}
+}
+
+.box {
+	padding: 1rem;
+	border: 1px solid #505050;
+	border-radius: 1rem;
+	text-decoration: none;
+}
+
+.auth {
+	padding: 3rem;
+	position: relative;
+	border-radius: 1rem;
+	display: grid;
+	gap: 1rem;
+	isolation: isolate;
+	& label {
+		display: grid;
+	}
+
+	&::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border: 1px solid #505050;
+		border-radius: 1.5rem;
+		background-color: #303030;
+		z-index: -1;
+	}
+	&.loading::before {
+		animation-duration: 2s;
+		animation-name: spin;
+		animation-iteration-count: infinite;
+		animation-timing-function: ease-in-out;
+		/* animation-direction: alternate; */
+	}
+
+	&.validation-error {
+		&::before {
+			animation: shake 0.5s ease-in-out;
+			border-color: rgb(175, 119, 119);
+		}
+	}
+
+	& span {
+		color: rgb(175, 119, 119);
+	};
+}
+
+.search {
+	display: grid;
+	position: relative;
+	grid-template-columns: 1fr auto;
+	gap: 0.5rem;
+}
+
+input {
+	/* appearance: none; */
+	background-color: #404040;
+	padding: 0.2rem 0.5rem;
+	border-radius: 1rem;
+	border: none;
+	/* border: 1px solid #909090; */
+}
+
+button,
+input[type='submit'] {
+	background-color: #404040;
+	padding: 0.2rem 0.5rem;
+	border-radius: 1rem;
+	border: none;
+	border: 1px solid #909090;
+	cursor: pointer;
+}
+
+.options {
+	position: absolute;
+	right: 0;
+	top: calc(100% + 0.5rem);
+	scale: 1 1;
+
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2rem;
+	background-color: #303030;
+	border-radius: 0.5rem;
+
+	overflow: hidden;
+	translate: 0 0;
+	padding: 1rem;
+
+	transition: scale 0.2s ease-in-out, translate 0.2s ease-in-out;
+
+	&.hidden {
+		scale: 1 0;
+		translate: 0 -50%;
+	}
+
+	& label {
+		display: grid;
+	}
+}
+
+.event {
+	display: grid;
+	grid-template-columns: auto 1fr;
+
+	& > :last-child {
+		width: min(40rem, 100%);
+		margin-inline: auto;
+		display: flex;
+		flex-direction: column;
+		align-items: end;
+		gap: 0.5rem;
+	}
+
+	& .ticket-type {
+		display: flex;
+		flex-wrap: wrap;
+
+		gap: 0.3rem;
+		padding: 0.5rem 1rem;
+		border-radius: 1.5rem;
+		background-color: #303030;
+	}
+
+	& :has(> .ticket-type) {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: end;
+		gap: 1rem;
+	}
+}
+
+.error {
+	padding: 3rem 2rem 2rem 2rem;
+	position: fixed;
+	top: 1rem;
+	left: 50%;
+	translate: -50%;
+	background-color: #303030;
+
+	& button {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.5rem;
+	}
+}
+
+.center {
+	display: grid;
+	min-height: 100svh;
+	place-items: center;
+}
+
+@keyframes spin {
+	to {
+		rotate: 360deg;
+	}
+}
+@keyframes shake {
+	0% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(-1rem);
+	}
+	50% {
+		transform: translateX(1rem);
+	}
+	75% {
+		transform: translateX(-1rem);
+	}
+	100% {
+		transform: translateX(0);
+	}
+}

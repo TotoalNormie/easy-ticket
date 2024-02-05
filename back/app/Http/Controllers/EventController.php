@@ -11,12 +11,61 @@ use Illuminate\Validation\ValidationException;
 
 class EventController extends Controller
 {
+    function getById($id)
+    {
+        $event = Event::with('eventType')->with('tickets')->find($id);
+        if (!$event) {
+            return response()->json([
+                'result' => false,
+                'message' => 'Event not found',
+            ], 422);
+        }
+
+        foreach ($event->tickets as $id => $ticket) {
+            $event->tickets[$id]->seatsAvailable = OrderedTicketController::availableTickets($ticket->id);
+        }
+
+        return response()->json([
+            'result' => true,
+            'data' => $event
+        ]);
+    }
+    function get(Request $request)
+    {
+        // Set default options
+        $options = [
+            'orderBy' => 'datetime', // Default order by datetime
+            'orderDirection' => 'asc', // Default order direction ascending
+            'limit' => 10, // Default limit
+            'eventTypes' => [], // Default empty array for event types
+        ];
+
+        // Merge default options with the provided options from the request
+        $options = array_merge($options, $request->all());
+
+        // Validate options if needed
+
+        // Query events table based on options, filter for future events, and event types
+        $events = Event::with('eventType')->where('datetime', '>', Carbon::now())
+            ->when(!empty($options['eventTypes']), function ($query) use ($options) {
+                // If eventTypes are provided, filter by them
+                $query->whereIn('event_type_id', $options['eventTypes']);
+            })
+            ->orderBy($options['orderBy'], $options['orderDirection'])
+            ->limit($options['limit'])
+            ->get();
+
+        // Return the result
+        return response()->json($events);
+    }
+
     function create(Request $request, Event $event)
     {
         try {
             $request->validate([
-                'name' => 'required|string|max:20',
+                'name' => 'required|string|max:20|unique:events,name',
                 'description' => 'required|string|max:1000',
+                'image' => 'required|string|max:1000',
                 'eventType' => 'required|integer',
                 'datetime' => 'required|string',
                 'location' => 'required|string|max:100',
@@ -53,6 +102,7 @@ class EventController extends Controller
         $event->name = $request->name;
         $event->event_type_id = $request->eventType;
         $event->description = $request->description;
+        $event->image = $request->image;
         $event->datetime = $datetime;
         $event->location = $request->location;
 
@@ -85,6 +135,7 @@ class EventController extends Controller
             $request->validate([
                 'name' => 'required|string|max:20',
                 'description' => 'required|string|max:1000',
+                'image' => 'required|string|max:1000',
                 'eventType' => 'required|integer',
                 'datetime' => 'required|string',
                 'location' => 'required|string|max:100',
@@ -118,11 +169,19 @@ class EventController extends Controller
             ], 422);
         }
 
-        $event = Event::with('tickets')->find($id);
+        $event = Event::find($id);
 
+        if (!$event) {
+            return response([
+                'result' => false,
+                'message' => 'event not found',
+            ], 422);
+        }
+        // var
 
         $event->name = $request->name;
         $event->description = $request->description;
+        $event->image = $request->image;
         $event->event_type_id = $request->eventType;
         $event->datetime = $datetime;
         $event->location = $request->location;
@@ -136,14 +195,25 @@ class EventController extends Controller
 
 
         //     $eventId = $event->id;
+        $ticketIdArray = [];
 
         foreach ($request->tickets as $ticket) {
-            TicketType::find($ticket['id'])->update([
+            $ticketObject = TicketType::find($ticket['id']);
+            if (!$ticketObject) {
+                return response([
+                    'result' => false,
+                    'message' => 'ticket not found',
+                ], 422);
+            }
+            $ticketObject->update([
                 'ticket_name' => $ticket['ticketName'],
                 'seats' => $ticket['seats'],
                 'price' => $ticket['price'],
             ]);
+            $ticketIdArray[] = $ticket['id'];
         }
+
+        TicketType::where('event_id', $id)->whereNotIn('id', $ticketIdArray)->delete();
 
         return response([
             'result' => true,

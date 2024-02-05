@@ -8,6 +8,10 @@ use Illuminate\Validation\ValidationException;
 
 class EventTypeController extends Controller
 {
+    function get()
+    {
+        return response()->json(EventType::all());
+    }
     function create(Request $request)
     {
         try {
@@ -37,7 +41,7 @@ class EventTypeController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string|max:25',
+                'name' => 'required|string|max:25|unique:event_types,type_name',
             ]);
         } catch (ValidationException $e) {
             return response([

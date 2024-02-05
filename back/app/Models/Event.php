@@ -12,4 +12,9 @@ class Event extends Model
     {
         return $this->hasMany(TicketType::class);
     }
+
+    public function eventType()
+    {
+        return $this->belongsTo(EventType::class);
+    }
 }

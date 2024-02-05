@@ -1,32 +1,30 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { isLoggedIn } from './auth/isLoggedIn';
 import Login from './component/Login';
+import { QueryClient, QueryClientProvider } from 'react-query';
+import { ReactQueryDevtools } from 'react-query/devtools';
+import Home from './component/Home';
+import Event from './component/Event';
+import './style/main.css';
+
+const queryClient = new QueryClient();
 
 const App = () => {
-	const user = isLoggedIn();
+	// const user = isLoggedIn();
 	return (
-		<BrowserRouter>
-			<header></header>
-			<nav></nav>
-			<main>
-				<Routes>
-					<Route
-						index
-						element={
-							<div>
-								{user ? (
-									<>
-										<h1>{user.name}</h1>
-										<p>{user.email}</p>
-									</>
-								) : null}
-							</div>
-						}
-					/>
-					<Route path='/login' element={<Login />} />
-				</Routes>
-			</main>
-		</BrowserRouter>
+		<QueryClientProvider client={queryClient}>
+			<BrowserRouter>
+				<header></header>
+				<nav></nav>
+				<main>
+					<Routes>
+						<Route index element={<Home />} />
+						<Route path='/login' element={<Login />} />
+						<Route path='/event/:id' element={<Event />} />
+					</Routes>
+				</main>
+			</BrowserRouter>
+			<ReactQueryDevtools />
+		</QueryClientProvider>
 	);
 };
 

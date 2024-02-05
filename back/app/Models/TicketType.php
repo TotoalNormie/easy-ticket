@@ -12,6 +12,11 @@ class TicketType extends Model
 
     public function event()
     {
-        $this->belongsTo(Event::class);
+        return $this->belongsTo(Event::class);
+    }
+
+    public function orderedTickets()
+    {
+        return $this->hasMany(OrderedTicket::class);
     }
 }
