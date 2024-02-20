@@ -11,6 +11,19 @@ use Illuminate\Validation\ValidationException;
 
 class EventController extends Controller
 {
+    protected $messages = [
+        'tickets.*.ticketName.required' => 'The ticket name field is required.',
+        'tickets.*.ticketName.string' => 'The ticket name must be a string.',
+        'tickets.*.ticketName.max' => 'The ticket name must not exceed :max characters.',
+        'tickets.*.seats.required' => 'The seats field is required.',
+        'tickets.*.seats.integer' => 'The seats field must be an integer.',
+        'tickets.*.seats.min' => 'The seats field must be at least :min.',
+        'tickets.*.seats.max' => 'The seats field must not exceed :max.',
+        'tickets.*.price.required' => 'The price field is required.',
+        'tickets.*.price.numeric' => 'The price field must be a number.',
+        'tickets.*.price.between' => 'The price field must be between :min and :max.',
+    ];
+    
     function getById($id)
     {
         $event = Event::with('eventType')->with('tickets')->find($id);
@@ -73,12 +86,14 @@ class EventController extends Controller
                 'tickets.*.ticketName' => 'required|string|max:15',
                 'tickets.*.seats' => 'required|integer|min:5|max:1000',
                 'tickets.*.price' => 'required|numeric|between:0.01,999999.99',
-            ]);
+            ], $this->messages);
         } catch (ValidationException $e) {
             return response([
                 'result' => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors(),
+                'errors' => array_map(function($error) {
+                    return $error[0];
+                }, $e->errors()),
                 'input' => $request->all(),
             ], 422);
         }

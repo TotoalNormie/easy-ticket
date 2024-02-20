@@ -38,7 +38,7 @@ class AuthenticationController extends Controller
             return response()->json([
                 'result' => false,
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()->toArray()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -85,15 +85,17 @@ class AuthenticationController extends Controller
             return response([
                 'result' => false,
                 'message' => 'Validation failed',
-                'error' => $validator->errors()->all()
+                'errors' => $validator->errors()->all()
             ], 422);
         }
         $request['password'] = Hash::make($request['password']);
         $request['remember_token'] = Str::random(10);
         $user = User::create($request->toArray());
         $token = $user->createToken('Laravel Password Grant Client')->accessToken;
-        $response = ['token' => $token];
-        
-        return response($response, 200);
+
+        return response([
+            'token' => $token,
+            'user' => $user,
+        ], 200);
     }
 }

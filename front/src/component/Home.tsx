@@ -36,7 +36,7 @@ export type EventData = {
 export type ErrorData = {
 	message: string;
 	result: boolean;
-	errors: { [key: string]: string[] };
+	errors: { [key: string]: string };
 };
 
 export type EventType = {

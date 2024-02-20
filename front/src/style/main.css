@@ -14,8 +14,14 @@ body {
 }
 
 #root {
-	padding: 1rem;
 	min-height: 100svh;
+	display: grid;
+	grid-template-rows: auto 1fr;
+	height: 100svh;
+}
+
+main {
+	padding: 1rem;
 }
 
 .grid {
@@ -52,6 +58,8 @@ body {
 	position: relative;
 	border-radius: 1rem;
 	display: grid;
+	/* aspect-ratio: 1; */
+	/* width: min(30rem, 100%); */
 	gap: 1rem;
 	isolation: isolate;
 	& label {
@@ -67,7 +75,7 @@ body {
 		background-color: #303030;
 		z-index: -1;
 	}
-	&.loading::before {
+	&.loading:not(.register):before {
 		animation-duration: 2s;
 		animation-name: spin;
 		animation-iteration-count: infinite;
@@ -75,16 +83,34 @@ body {
 		/* animation-direction: alternate; */
 	}
 
-	&.validation-error {
-		&::before {
-			animation: shake 0.5s ease-in-out;
-			border-color: rgb(175, 119, 119);
-		}
+	&.validation-error::before {
+		animation: shake 0.5s ease-in-out;
+		border-color: rgb(175, 119, 119);
+	}
+
+	& .loader {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
 	}
 
 	& span {
 		color: rgb(175, 119, 119);
-	};
+	}
+}
+
+.loader {
+	width: 3rem;
+	aspect-ratio: 1;
+	border-radius: 50%;
+	border: 0.5rem solid;
+	border-color: #505050 #0000;
+	animation: l1 1s infinite;
+}
+@keyframes l1 {
+	to {
+		transform: rotate(0.5turn);
+	}
 }
 
 .search {
@@ -189,8 +215,72 @@ input[type='submit'] {
 
 .center {
 	display: grid;
-	min-height: 100svh;
+	/* min-height: 100svh; */
+	height: 100%;
 	place-items: center;
+}
+
+header {
+	display: flex;
+	justify-content: space-between;
+	padding: 1rem;
+	background-color: #303030;
+	& a {
+		padding: 0.5rem;
+		border: 1px solid #505050;
+		border-radius: 0.5rem;
+		text-decoration: none;
+	}
+	& .buttons {
+		display: flex;
+		gap: 0.5rem;
+	}
+}
+
+.form {
+	display: grid;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 1rem;
+
+	& label {
+		display: grid;
+		flex-grow: 1;
+		& input {
+			min-width: 100%;
+		}
+	}
+	& button {
+		align-self: center;
+	}
+	& .error-message {
+		color: rgb(175, 119, 119);
+		position: relative;
+		padding-left: 1.5rem;
+		&::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			height: 1lh;
+			width: 1lh;
+			background-image: url('../assets/warning-circle.svg');
+			object-fit: cover;
+			background-size: cover;
+		}
+	}
+}
+
+.error-border {
+	border: 1px solid rgb(175, 119, 119);
+	transition: border 0.2s ease-in-out;
+}
+
+.gap {
+	display: grid;
+	gap: 1rem;
 }
 
 @keyframes spin {

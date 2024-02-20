@@ -21,10 +21,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
     // ...
@@ -32,7 +28,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
 Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
     Route::post('login', [AuthenticationController::class, 'store']);
-    Route::delete('logout', [AuthenticationController::class, 'destroy'])->middleware('auth:api');
+    Route::delete('logout', [AuthenticationController::class, 'destroy'])->middleware(['auth:api', 'cors']);
     Route::post('register', [AuthenticationController::class, 'register']);
     Route::get('check-auth', [AuthenticationController::class, 'checkAuth'])->middleware('auth:api');
 });

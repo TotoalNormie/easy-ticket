@@ -1,8 +1,10 @@
-import axios, { AxiosResponse } from 'axios';
+import { AxiosResponse } from 'axios';
 import Cookies from 'js-cookie';
 import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ErrorData } from './Home';
+import { useMutation, useQueryClient } from 'react-query';
+import { sendRequest } from '../global/sendRequest';
 
 type Response = {
 	result: boolean;
@@ -10,55 +12,56 @@ type Response = {
 	user: {
 		name: string;
 		email: string;
+		isAdmin: boolean;
 	};
 };
 
 const Login = () => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState('');
+	const queryClient = useQueryClient();
 	const navigate = useNavigate();
+	const [errorMsg, setErrorMsg] = useState('');
+
+	const { mutate, status, error } = useMutation({
+		mutationFn: (data: any) => sendRequest('post', 'v1/login', data),
+		onSuccess: (data: Response) => {
+			Cookies.set('token', data.token);
+			Cookies.set('username', data.user.name);
+			Cookies.set('email', data.user.email);
+			Cookies.set('isAdmin', `${data.user.isAdmin}`);
+			queryClient.resetQueries(['user']);
+			setErrorMsg('');
+			navigate('/');
+		},
+		onError: (res: any) => {
+			const error = res.response.data as ErrorData;
+			// console.error(res.response, error);
+			if (error?.errors) {
+				return setErrorMsg(Object.values(error.errors)[0][0]);
+			}
+			return setErrorMsg(error.message);
+		},
+	});
 
 	const login = (e: FormEvent) => {
 		e.preventDefault();
 		console.log('works');
-		setLoading(true);
-		setError('');
 
-		axios
-			.post('http://127.0.0.1:8000/api/v1/login', {
-				email: email,
-				password: password,
-			})
-			.then((response: AxiosResponse) => {
-				const data: Response = response.data;
-				Cookies.set('token', data.token);
-				Cookies.set('username', data.user.name);
-				Cookies.set('email', data.user.email);
-				setLoading(false);
-				navigate('/');
-			})
-			.catch(res => {
-				const error = res.response.data as ErrorData;
-				// console.error(res.response, error);
-				if (error?.errors) {
-					setError(Object.values(error.errors)[0][0]);
-					return;
-				}
-				setError(error.message);
-			}).finally(() => {
-				setLoading(false);
-			});
+		mutate({ email, password });
 	};
 
 	return (
 		<div className='center'>
-			<form onSubmit={login} className={`auth${loading ? ' loading' : ''}${error ? ' validation-error' : ''}`}>
+			<form
+				onSubmit={login}
+				className={`auth ${status == 'loading' ? ' loading' : ''}${
+					status == 'error' ? ' validation-error' : ''
+				}`}>
 				<label>
 					Email:
 					<input
-						autoComplete='email'
+						autoComplete=''
 						type='email'
 						onChange={e => setEmail(e.target.value)}
 						value={email}
@@ -73,8 +76,9 @@ const Login = () => {
 						value={password}
 					/>
 				</label>
-				<span>{error}</span>
+				<span>{errorMsg}</span>
 				<input type='submit' value='Login' />
+				<p>Don't have an account? <Link to='/register'>Register</Link></p>
 			</form>
 		</div>
 	);
