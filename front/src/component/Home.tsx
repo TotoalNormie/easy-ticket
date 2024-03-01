@@ -85,7 +85,7 @@ const Home = () => {
 
 	const handleOption: ChangeEventHandler<HTMLInputElement | HTMLSelectElement> = e => {
 		e.preventDefault();
-		console.log({ [e.target.name]: e.target.value });
+		// console.log({ [e.target.name]: e.target.value });
 		setOptions({
 			...options,
 			[e.target.name]: e.target.value,
@@ -118,14 +118,14 @@ const Home = () => {
 	const filteredItems: EventData[] | undefined = events?.filter(event => {
 		if (!search) return true;
 
-		console.log(
-			event.name.substr(0, search.length).toLowerCase(),
-			search.toLowerCase(),
-			stringSimilarity(
-				event.name.substr(0, search.length).toLowerCase(),
-				search.toLowerCase()
-			)
-		);
+		// console.log(
+		// 	event.name.substr(0, search.length).toLowerCase(),
+		// 	search.toLowerCase(),
+		// 	stringSimilarity(
+		// 		event.name.substr(0, search.length).toLowerCase(),
+		// 		search.toLowerCase()
+		// 	)
+		// );
 		if (
 			stringSimilarity(
 				event.name.substr(0, search.length).toLowerCase(),
@@ -149,7 +149,7 @@ const Home = () => {
 			return true;
 	});
 
-	console.log('items', filteredItems);
+	// console.log('items', filteredItems);
 
 	if (error) return 'An error has occurred: ' + error.message;
 
@@ -169,7 +169,7 @@ const Home = () => {
 							Order by:{' '}
 							<select name='orderBy' value={options.orderBy} onChange={handleOption}>
 								{order.map(elem => (
-									<option value={elem}>{elem}</option>
+									<option key={elem}	value={elem}>{elem}</option>
 								))}
 							</select>
 						</label>
@@ -209,7 +209,7 @@ const Home = () => {
 			<h1>Current Events:</h1>
 			<div className='grid'>
 				{isLoading
-					? 'Loading...'
+					? <div className='loader'></div>
 					: filteredItems?.map(event => (
 							<Link to={`/event/${event.id}`} key={event.id} className='box'>
 								<div className='image'>

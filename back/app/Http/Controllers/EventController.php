@@ -6,12 +6,13 @@ use App\Models\Event;
 use App\Models\TicketType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class EventController extends Controller
 {
     protected $messages = [
+        'datetime.after' => 'The datetime must be in the future.',
         'tickets.*.ticketName.required' => 'The ticket name field is required.',
         'tickets.*.ticketName.string' => 'The ticket name must be a string.',
         'tickets.*.ticketName.max' => 'The ticket name must not exceed :max characters.',
@@ -23,7 +24,7 @@ class EventController extends Controller
         'tickets.*.price.numeric' => 'The price field must be a number.',
         'tickets.*.price.between' => 'The price field must be between :min and :max.',
     ];
-    
+
     function getById($id)
     {
         $event = Event::with('eventType')->with('tickets')->find($id);
@@ -49,23 +50,27 @@ class EventController extends Controller
         $options = [
             'orderBy' => 'datetime', // Default order by datetime
             'orderDirection' => 'asc', // Default order direction ascending
-            'limit' => 10, // Default limit
             'eventTypes' => [], // Default empty array for event types
+            'datetime' => 'now',
         ];
 
         // Merge default options with the provided options from the request
         $options = array_merge($options, $request->all());
+        if ($options['datetime'] == 'all') {
+            $options['datetime'] = Carbon::parse('01/01/1970');
+        } else {
+            $options['datetime'] = Carbon::parse($options['datetime']);
+        }
 
         // Validate options if needed
 
         // Query events table based on options, filter for future events, and event types
-        $events = Event::with('eventType')->where('datetime', '>', Carbon::now())
+        $events = Event::with('eventType')->where('datetime', '>', $options['datetime'])
             ->when(!empty($options['eventTypes']), function ($query) use ($options) {
                 // If eventTypes are provided, filter by them
                 $query->whereIn('event_type_id', $options['eventTypes']);
             })
             ->orderBy($options['orderBy'], $options['orderDirection'])
-            ->limit($options['limit'])
             ->get();
 
         // Return the result
@@ -80,9 +85,9 @@ class EventController extends Controller
                 'description' => 'required|string|max:1000',
                 'image' => 'required|string|max:1000',
                 'eventType' => 'required|integer',
-                'datetime' => 'required|string',
+                'datetime' => 'required|string|after:now',
                 'location' => 'required|string|max:100',
-                'tickets' => 'required|array',
+                'tickets' => 'required|array|min:1',
                 'tickets.*.ticketName' => 'required|string|max:15',
                 'tickets.*.seats' => 'required|integer|min:5|max:1000',
                 'tickets.*.price' => 'required|numeric|between:0.01,999999.99',
@@ -91,7 +96,7 @@ class EventController extends Controller
             return response([
                 'result' => false,
                 'message' => 'Validation failed',
-                'errors' => array_map(function($error) {
+                'errors' => array_map(function ($error) {
                     return $error[0];
                 }, $e->errors()),
                 'input' => $request->all(),
@@ -101,18 +106,6 @@ class EventController extends Controller
         // $data = $request->input();
 
         $datetime = Carbon::parse($request->datetime);
-
-
-        if ($datetime->isPast()) {
-            return response([
-                'result' => false,
-                'message' => 'Validation failed',
-                'errors' => [
-                    'datetime' => 'Date can not be in the past',
-                ]
-            ], 422);
-        }
-
 
         $event->name = $request->name;
         $event->event_type_id = $request->eventType;
@@ -148,18 +141,17 @@ class EventController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string|max:20',
+                'name' => "required|string|max:20|unique:events,name,{$id},id",
                 'description' => 'required|string|max:1000',
                 'image' => 'required|string|max:1000',
                 'eventType' => 'required|integer',
-                'datetime' => 'required|string',
+                'datetime' => 'required|string|after:now',
                 'location' => 'required|string|max:100',
-                'tickets' => 'required|array',
+                'tickets' => 'required|array|min:1',
                 'tickets.*.ticketName' => 'required|string|max:15',
-                'tickets.*.id' => 'required|integer',
                 'tickets.*.seats' => 'required|integer|min:5|max:1000',
                 'tickets.*.price' => 'required|numeric|between:0.01,999999.99',
-            ]);
+            ], $this->messages);
         } catch (ValidationException $e) {
             return response([
                 'result' => false,
@@ -172,17 +164,6 @@ class EventController extends Controller
         // $data = $request->input();
 
         $datetime = Carbon::parse($request->datetime);
-
-
-        if ($datetime->isPast()) {
-            return response([
-                'result' => false,
-                'message' => 'Validation failed',
-                'errors' => [
-                    'datetime' => 'Date can not be in the past',
-                ]
-            ], 422);
-        }
 
         $event = Event::find($id);
 
@@ -215,10 +196,20 @@ class EventController extends Controller
         foreach ($request->tickets as $ticket) {
             $ticketObject = TicketType::find($ticket['id']);
             if (!$ticketObject) {
-                return response([
-                    'result' => false,
-                    'message' => 'ticket not found',
-                ], 422);
+                Log::info("Ticket not found, event: {$id}. " . json_encode([
+                    'ticket_name' => $ticket['ticketName'],
+                    'seats' => $ticket['seats'],
+                    'price' => $ticket['price'],
+                    'event_id' => $id
+                ]));
+                $newTicket = TicketType::create([
+                    'event_id' => $id,
+                    'ticket_name' => $ticket['ticketName'],
+                    'seats' => $ticket['seats'],
+                    'price' => $ticket['price'],
+                ]);
+                $ticketIdArray[] = $newTicket['id'];
+                continue;
             }
             $ticketObject->update([
                 'ticket_name' => $ticket['ticketName'],

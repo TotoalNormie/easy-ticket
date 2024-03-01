@@ -10,6 +10,10 @@ import Header from './component/Header';
 import Logout from './component/Logoout';
 import Admin from './component/Admin';
 import AddEvent from './component/AddEvent';
+import EditEvent from './component/EditEvent';
+import AdminIndex from './component/AdminIndex';
+import Types from './component/Types';
+import History from './component/History';
 
 const queryClient = new QueryClient();
 
@@ -26,11 +30,12 @@ const App = () => {
 						<Route path='/register' element={<Register />} />
 						<Route path='/logout' element={<Logout />} />
 						<Route path='/event/:id' element={<Event />} />
+						<Route path='/history' element={<History />} />
 						<Route path='/admin' element={<Admin />}>
-							<Route index element={<div>
-								
-							</div>} />
+							<Route index element={<AdminIndex />} />
 							<Route path='addEvent' element={<AddEvent />} />
+							<Route path='editEvent/:eventId' element={<EditEvent />} />
+							<Route path='types' element={<Types />} />
 							<Route index element={<Home />} />
 						</Route>
 					</Routes>

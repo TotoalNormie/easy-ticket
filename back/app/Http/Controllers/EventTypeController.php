@@ -41,7 +41,7 @@ class EventTypeController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string|max:25|unique:event_types,type_name',
+                'name' => "required|string|max:25|unique:event_types,type_name,{$id},id",
             ]);
         } catch (ValidationException $e) {
             return response([

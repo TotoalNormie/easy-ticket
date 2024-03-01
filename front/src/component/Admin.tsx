@@ -4,14 +4,15 @@ import { Link, Navigate, Outlet } from 'react-router-dom';
 
 const Admin = () => {
 	const user = isLoggedIn();
-    // console.log(user);
-    if(!user?.isAdmin) return <Navigate to='/' />
+	if (!user?.isAdmin) return <Navigate to='/' />;
 	return (
 		<div>
-			<Outlet />
 			<aside>
+				<Link to=''>Event admin panel</Link>
 				<Link to='addEvent'>Add event</Link>
+				<Link to='types'>Event type admin panel</Link>
 			</aside>
+			<Outlet />
 		</div>
 	);
 };

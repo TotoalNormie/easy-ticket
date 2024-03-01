@@ -12,7 +12,26 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class OrderedTicketController extends Controller
 {
-    // ... (your existing code)
+    function getUserTickets()
+    {
+        $tickets = OrderedTicket::with('ticketType.event')
+            ->where('user_id', auth()->id())
+            ->get()
+            ->groupBy('ticketType.event.name')
+            ->map(function ($tickets) {
+                return $tickets->map(function ($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'type' => $ticket->ticketType->ticket_name,
+                    ];
+                });
+            });
+
+        return response()->json([
+            'result' => true,
+            'tickets' => $tickets,
+        ]);
+    }
 
     function buy(Request $request)
     {
@@ -57,7 +76,7 @@ class OrderedTicketController extends Controller
             }
         }, 5); // 5 is the number of attempts for the transaction
 
-       // return json response fro succes with ordered tickets
+        // return json response fro succes with ordered tickets
         return response()->json([
             'result' => true,
             'message' => 'Tickets bought successfully',
@@ -75,6 +94,7 @@ class OrderedTicketController extends Controller
 
         foreach ($orderedTickets as $orderedTicket) {
             $ticket = OrderedTicket::with('ticketType.event')->find($orderedTicket)->toArray();
+            
             $qrCode = QrCode::size(200)->generate($ticket['id']);
             // print_r($ticket);
             $data[] = [
@@ -84,7 +104,11 @@ class OrderedTicketController extends Controller
                 'ticket' => $ticket['ticket_type']['ticket_name'],
                 'qrCode' => $qrCode,
             ];
-
+            
+            // return response()->json([
+            //     "result" => false,
+            //     "request" => $data,
+            // ]);
         }
 
         // Log::debug('Debugging $data:', $data);

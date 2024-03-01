@@ -36,16 +36,17 @@ Route::group(['namespace' => 'Api', 'prefix' => 'v1'], function () {
 Route::middleware(['auth:api'])->group(function () {
     Route::post('buy-ticket', [OrderedTicketController::class, 'buy']);
     Route::post('get-ticket', [OrderedTicketController::class, 'generatePDF']);
+    Route::get('get-tickets', [OrderedTicketController::class, 'getUserTickets']);
 });
 
 Route::middleware(['auth:api', AdminMiddleware::class])->group(function () {
     Route::post('create-event', [EventController::class, 'create']);
-    Route::patch('edit-event/{id}', [EventController::class, 'update']);
-    Route::delete('delete-event/{id}', [EventController::class, 'remove']);
+    Route::post('edit-event/{id}', [EventController::class, 'update'])->middleware(['cors']);
+    Route::delete('delete-event/{id}', [EventController::class, 'remove'])->middleware(['cors']);
 
     Route::post('create-event-type', [EventTypeController::class, 'create']);
-    Route::patch('edit-event-type/{id}', [EventTypeController::class, 'update']);
-    Route::delete('delete-event-type/{id}', [EventTypeController::class, 'remove']);
+    Route::post('edit-event-type/{id}', [EventTypeController::class, 'update'])->middleware(['cors']);
+    Route::delete('delete-event-type/{id}', [EventTypeController::class, 'remove'])->middleware(['cors']);
 });
 
 Route::get('pdf', [PDFController::class, 'generatePDF']);

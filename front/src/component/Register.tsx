@@ -1,4 +1,3 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
 import Cookies from 'js-cookie';
 import { FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -25,7 +24,7 @@ const Login = () => {
 	const navigate = useNavigate();
 	const [errorMsg, setErrorMsg] = useState('');
 
-	const { mutate, status, error } = useMutation({
+	const { mutate, status } = useMutation({
 		mutationFn: (data: any) => sendRequest('post', 'v1/register', data),
 		onSuccess: (data: Response) => {
 			console.log(data);

@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { ErrorData, EventType } from './Home';
-import { useState } from 'react';
+import { ErrorData, EventData, EventType } from './Home';
+import { useEffect, useState } from 'react';
 import { sendRequest } from '../global/sendRequest';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 
 function objectHasKeys(obj: { [key: string]: string } | null, keys: string[]) {
@@ -27,13 +28,15 @@ const TicketType = ({
 	deleteElem,
 	index,
 	errors = {},
+	id,
 }: {
 	name?: string;
 	price?: number;
 	seats?: number;
+	id?: number;
 	deleteElem: (index: number) => void;
 	index: number;
-	errors: { [key: string]: string };
+	errors?: { [key: string]: string };
 }) => {
 	const error = {} as { [key: string]: string };
 	for (let key in errors) {
@@ -49,6 +52,7 @@ const TicketType = ({
 		<div className={`box ${isError ? 'error-border' : ''}`}>
 			<h2>Ticket type</h2>
 			<div className='form'>
+				<input type='hidden' name={`tickets[${index}][id]`} value={id} />
 				<label>
 					Name:
 					<input
@@ -88,24 +92,9 @@ const TicketType = ({
 	);
 };
 
-const AddEvent = () => {
+const EditEvent = () => {
 	const queryClient = useQueryClient();
-	const {
-		mutate: addEvent,
-		error,
-		status,
-	} = useMutation({
-		mutationFn: (data: FormData) => sendRequest('post', 'create-event', data),
-		onSuccess: () => {
-			queryClient.invalidateQueries(['events']);
-			console.log('success');
-		},
-	});
-
-	const validation: ErrorData | null = error as ErrorData;
-
-	// console.log(error)
-
+	const { eventId: id } = useParams();
 	const { data: eventTypes } = useQuery<EventType[]>({
 		queryKey: ['eventTypes'],
 		queryFn: async () => {
@@ -113,27 +102,68 @@ const AddEvent = () => {
 			return response.data;
 		},
 	});
+	const {
+		mutate: editEvent,
+		error,
+		status,
+	} = useMutation({
+		mutationFn: (data: FormData) => sendRequest('post', `edit-event/${id}`, data),
+		onSuccess: () => {
+			queryClient.invalidateQueries(['events', id]);
+			console.log('success');
+		},
+	});
+
+	const {
+		isLoading,
+		data,
+		error: eventErrorData,
+	} = useQuery({
+		queryFn: () => sendRequest('get', `event/${id}`),
+		queryKey: ['events', id],
+	});
+	const event = data?.data as EventData;
+	const eventError = eventErrorData as ErrorData;
+
+	const validation: ErrorData | null = error as ErrorData;
+
+	console.log(event);
+
 	const deleteTicket = (index: number) => {
 		console.log(index);
-		setTickets(tickets.filter(elem => elem.index !== index));
+		if (tickets) setTickets(tickets.filter(elem => elem.index !== index));
 	};
 	const addTicket = () => {
-		setTickets([
-			...tickets,
-			{ key: tickets.length + 1, index: tickets.length + 1, name: '', price: 0, seats: 0 },
-		]);
+		if (tickets) {
+			setTickets([...tickets, { index: tickets.length + 1, name: '', price: 0, seats: 0 }]);
+		} else {
+			setTickets([{ index: 1, name: '', price: 0, seats: 0 }]);
+		}
 	};
-	const [tickets, setTickets] = useState([
-		{ key: 1, index: 1, name: 'default', price: 5, seats: 100 },
-	]);
+	const [tickets, setTickets] = useState<{ [key: string]: string | number }[] | null>(null);
+
+	useEffect(() => {
+		// Set tickets state only on initial render
+		if (event?.tickets && tickets === null) {
+			const initialTickets = event?.tickets?.map((ticket, index) => ({
+				...ticket,
+				name: ticket.ticket_name,
+				index,
+			}));
+			setTickets(initialTickets);
+		}
+	}, [event?.tickets, tickets?.length]);
 
 	const handleSubmit = e => {
 		e.preventDefault();
 		const formData = new FormData(e.target as HTMLFormElement);
-		// console.log(...formData);
-		addEvent(formData);
+		console.log(...formData);
+		editEvent(formData);
 	};
 
+	if (isLoading || !eventTypes) return <div className='loader'></div>;
+	if (eventError) return <div>{eventError?.message}</div>;
+	// console.log(tickets);
 	return (
 		<form onSubmit={handleSubmit} className='gap'>
 			<div
@@ -157,6 +187,7 @@ const AddEvent = () => {
 							type='text'
 							name='name'
 							className={validation?.errors?.name ? 'error-border' : ''}
+							defaultValue={event?.name}
 						/>
 						{validation?.errors?.name && (
 							<p className='error-message'>{validation?.errors?.name}</p>
@@ -168,6 +199,7 @@ const AddEvent = () => {
 							type='text'
 							name='description'
 							className={validation?.errors?.description ? 'error-border' : ''}
+							defaultValue={event?.description}
 						/>
 						{validation?.errors?.description && (
 							<p className='error-message'>{validation?.errors?.description}</p>
@@ -179,6 +211,7 @@ const AddEvent = () => {
 							type='text'
 							name='image'
 							className={validation?.errors?.image ? 'error-border' : ''}
+							defaultValue={event?.image}
 						/>
 						{validation?.errors?.image && (
 							<p className='error-message'>{validation?.errors?.image}</p>
@@ -190,6 +223,7 @@ const AddEvent = () => {
 							type='datetime-local'
 							name='datetime'
 							className={validation?.errors?.datetime ? 'error-border' : ''}
+							defaultValue={event?.datetime}
 						/>
 						{validation?.errors?.datetime && (
 							<p className='error-message'>{validation?.errors?.datetime}</p>
@@ -201,6 +235,7 @@ const AddEvent = () => {
 							type='text'
 							name='location'
 							className={validation?.errors?.location ? 'error-border' : ''}
+							defaultValue={event?.location}
 						/>
 						{validation?.errors?.location && (
 							<p className='error-message'>{validation?.errors?.location}</p>
@@ -208,17 +243,19 @@ const AddEvent = () => {
 					</label>
 					<label>
 						Type:
-						<select
-							name='eventType'
-							className={validation?.errors?.eventType ? 'error-border' : ''}
-							defaultValue=''>
-							<option hidden></option>
-							{eventTypes?.map(elem => (
-								<option key={elem.id} value={elem.id}>
-									{elem.type_name}
-								</option>
-							))}
-						</select>
+						{event?.event_type_id && (
+							<select
+								name='eventType'
+								className={validation?.errors?.eventType ? 'error-border' : ''}
+								defaultValue={event?.event_type_id}>
+								<option selected hidden></option>
+								{eventTypes?.map(elem => (
+									<option key={elem.id} value={elem.id}>
+										{elem.type_name}
+									</option>
+								))}
+							</select>
+						)}
 						{validation?.errors?.eventType && (
 							<p className='error-message'>{validation?.errors?.eventType}</p>
 						)}
@@ -231,9 +268,10 @@ const AddEvent = () => {
 					<p className='error-message'>{validation?.errors?.tickets}</p>
 				)}
 				<div className='gap'>
-					{tickets.map(elem => (
+					{tickets?.map(elem => (
 						<TicketType
 							{...elem}
+							key={elem?.index}
 							deleteElem={deleteTicket}
 							errors={validation?.errors}
 						/>
@@ -242,15 +280,13 @@ const AddEvent = () => {
 						Add ticket
 					</button>
 				</div>
-				{status == 'success' ? (
-					<div className='success'>Event created succesfully!</div>
-				) : null}
+				{status == 'success' ? <div className='success'>Event Updated!</div> : null}
 				{/* <div className='success'>Event created succesfully!</div> */}
 			</div>
 			{status == 'loading' ? <div className='loader'></div> : null}
-			<button>Create Event</button>
+			<button>Edit Event</button>
 		</form>
 	);
 };
 
-export default AddEvent;
+export default EditEvent;

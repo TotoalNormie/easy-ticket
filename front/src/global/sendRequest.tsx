@@ -15,6 +15,8 @@ export const sendRequest = (
     ...bonusHeaders,
   };
 
+  console.log(data);
+
   return new Promise((resolve, reject) => {
     axios({
       method,

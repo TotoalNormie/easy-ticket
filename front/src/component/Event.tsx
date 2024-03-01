@@ -32,7 +32,7 @@ const Event = () => {
 		onSuccess: response => {
 			console.log('success', response);
 
-			setTickets(response.data.orderedTickets);
+			setTickets(response?.orderedTickets);
 			setErrors('');
 		},
 		onError: (res: any) => {
@@ -54,7 +54,7 @@ const Event = () => {
 		queryKey: ['tickets', tickets],
 		onSuccess: (response) => {
 			console.log('success', response);
-			const blob = new Blob([response.data], { type: 'application/pdf' });
+			const blob = new Blob([response], { type: 'application/pdf' });
 
 			// Create a link element and set its href to the blob URL
 			const link = document.createElement('a');
@@ -87,7 +87,7 @@ const Event = () => {
 		mutate(data);
 	};
 
-	if (isLoading) return <div>Loading...</div>;
+	if (isLoading) return <div className='loader'></div>;
 	if (error) return <div>Error: {error.message}</div>;
 
 	return (
@@ -102,11 +102,11 @@ const Event = () => {
 					<p>
 						<strong>{event?.location}</strong>
 					</p>
-					<p>{event?.event_type.type_name}</p>
+					<p>{event?.event_type?.type_name}</p>
 					<li>{event?.datetime}</li>
 					<div className='ticketTypes'>
 						{/* list of tickets with their names and prices */}
-						{event?.tickets.map(ticket => (
+						{event?.tickets?.map(ticket => (
 							<div key={ticket.id} className='ticket-type'>
 								<h4>{ticket.ticket_name}</h4>|<p>{ticket.price}€</p>|
 								<p>{ticket.seatsAvailable} seats available</p>
@@ -123,7 +123,7 @@ const Event = () => {
 							<label>
 								Ticket Type:
 								<select name='ticketId'>
-									{event?.tickets.map(ticket => (
+									{event?.tickets?.map(ticket => (
 										<option key={ticket.id} value={ticket.id}>
 											{ticket.ticket_name}
 										</option>

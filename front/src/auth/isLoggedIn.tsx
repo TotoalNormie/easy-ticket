@@ -36,7 +36,6 @@ export const isLoggedIn = () => {
 		} as User;
 	}
 	if(!user && Cookies.get('token')) {
-		console.log('works')
 		return {
 			name: Cookies.get('username'),
 			email: Cookies.get('email'),
